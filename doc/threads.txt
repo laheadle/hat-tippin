@@ -1,0 +1,23 @@
+
+; anonymous seq
+
+(seq
+	 (fetch) ; the first form, a promise
+	 ((:ok (x y) ; the first function, of two variables
+		   z)
+	  (:err (e) e))
+	 ((:ok z)
+	  (:err q)))
+
+
+fetch()
+.then(function(x, y) { return z },
+      function (e) { return e })
+.then(function(x, y) { return z },
+      function () { return q })
+
+(chain (fetch)
+	   (then (lambda (x y) z)
+			 (lambda () q))
+	   (then (lambda () z)
+			 (lambda () q)))
