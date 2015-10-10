@@ -77,14 +77,59 @@
 		`(funcall ,(gen-tag tag) (create ,@props)
 				  (list ,@(mapcar (lambda (x) `(dom ,x)) body))))))
 
-;;;; EXAMPLE: todo app
+(defmacro push (elt array)
+  `(chain ,array (push ,elt)))
+
+(defun array-copy (a) (chain a (splice)))
+
+(defun make-instance (clazz props &rest children)
+  (let ((args (array-copy children)))
+	(chain args (unshift props))
+	(apply (chain *react (create-factory clazz)) args)))
+
+(defmacro f (args &rest body)
+  `(lambda ,args ,@body))
+
+(defvar next-key
+  (funcall 
+   (lambda ()  
+	 (let ((k 0))
+	   (lambda ()
+		 (incf k)
+		 k)))))
+
+
+(defun flatten (&rest args)
+  (let* ((arr ([]))
+		 (arrayp (f (elt)
+					(and (objectp elt)
+						 (@ elt splice)
+						 (@ elt concat))))
+		 (pushable (f (elt) (and (not (undefined elt))
+								 (not (arrayp elt))))))
+	(dolist (elt args)
+	  (cond
+		((pushable elt) (push elt arr))
+		((arrayp elt) (setf arr (chain arr (concat (flatten elt)))))))
+	arr))
+
+(defun make-keyed-instance (clazz props children)
+  (let ((props (or props (create))))
+	(setf (@ props key) (next-key))
+	(apply make-instance (flatten clazz props children))))
 
 (defvar *posts* ([]))
 
 (defun push-post (post)
-  (setf (aref *posts* (@ *posts* length)) post))
+  (push post *posts*))
 
-(defclass blog-index ()
+(defun get-post (id) (aref *posts* id))
+
+(defclass *blog (children)
+  (defun render ()
+	(dom children)))
+
+(defclass *blog-index ()
 
   (defun table-of-contents ()
 	(dom (:div)))
@@ -94,17 +139,19 @@
 
   ;; Dan Midwood http://danmidwood.com/content/2014/11/21/animated-paredit.html
   ;; http://pub.gajendra.net/src/paredit-refcard.pdf
-  ;; Chris Done's ircbrowse http://ircbrowse.net/browse/lisp?q=parenscript
-  ;; http://www.lispworks.com/documentation/HyperSpec/Front/index.htm
 
  (defun render ()
    (dom 
 	(:div 
 	 (:div (table-of-contents))
-	 (:div (@ this state posts))))))
+	 (:div `,(chain this state posts (map (lambda (post i)
+											(make-instance (@ *react-router *link)
+														   (create to post
+																   params (create id i)))))))))))
 
-(defun make-instance (clazz props)
-  (funcall (chain *react (create-factory clazz props))))
+(defclass *post (id)
+  (defun render ()
+	(get-post id)))
 
 (defmacro defpost (class title &rest body)
   `(progn
@@ -251,22 +298,29 @@ filled with thorough and well-written explanations of Common Lisp.")
   (:h3 "Future plans") ; https://github.com/johnmastro/trident-mode.el/blob/master/trident-mode.el
   )
 
-(dom ((:component router)
-	  ((:component route path "/" component ))	  ))
+;; (elts (*router
+;; 	   ((*route :path "/"
+;; 				:component *blog)
+;; 		((*index-route :component *blog-index))
+;; 		((*route :path "article/:id" :component *article)))))
 
-(elts (*router
-	   ((*route path "/"))))
 
-(defrouter *router
-	((*route path "/" component *index)
-	 ((*route path "/articles/2" component *index))))
-
-(with-slots ((*router *route) *react-router)
-	(chain *react (render
-				   (make-instance
-					*router
-					(create children (list (make-instance
-											*route
-											(create path "/"
-													component (aref *posts* 0))))))
-				   (@ window document body))))
+(with-slots (*router *route *index-route) *react-router
+  (chain
+   *react-d-o-m 
+   (render
+	(make-instance
+	 *router
+	 nil
+	 (make-keyed-instance
+	  *route
+	  (create path "/"
+			  component *blog)
+	  (make-keyed-instance
+	   *index-route
+	   (create component *blog-index))
+	  (make-keyed-instance
+	   *route
+	   (create component *post
+			   :path "posts/id"))))
+	(chain document (get-element-by-id "container")))))
