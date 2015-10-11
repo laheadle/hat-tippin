@@ -38,9 +38,18 @@
     (loop for (ignore name args . body) in methods
        collect name collect (gen-method args body props method-names))))
 
+(defun* make-make-class-name (name)
+  (flet ((chop (s) (string-left-trim "*" s)))
+	(make-symbol (concatenate 
+				  'string "MAKE-"
+				  (chop (string name))))))
+
 (defmacro defclass (name props &body methods)
   (let ((props (gen-defclass-props props methods)))
-    `(var ,name (chain *react (create-class (create ,@props))))))
+    `(progn (var ,name (chain *react (create-class (create ,@props))))
+			(defun ,(make-make-class-name name) ()
+			  (let ((fac (chain *react (create-factory ,name))))
+				(chain fac (apply fac arguments)))))))
 
 ;;;; Dom
 
@@ -82,10 +91,14 @@
 
 (defun array-copy (a) (chain a (splice)))
 
+#+nil
 (defun make-instance (clazz props &rest children)
   (let ((args (array-copy children)))
 	(chain args (unshift props))
 	(apply (chain *react (create-factory clazz)) args)))
+
+(defmacro make-instance (clazz props &rest children)
+  `(funcall (chain *react (create-factory ,clazz)) ,props ,@children))
 
 (defmacro f (args &rest body)
   `(lambda ,args ,@body))
@@ -98,25 +111,15 @@
 		 (incf k)
 		 k)))))
 
-
-(defun flatten (&rest args)
-  (let* ((arr ([]))
-		 (arrayp (f (elt)
-					(and (objectp elt)
-						 (@ elt splice)
-						 (@ elt concat))))
-		 (pushable (f (elt) (and (not (undefined elt))
-								 (not (arrayp elt))))))
-	(dolist (elt args)
-	  (cond
-		((pushable elt) (push elt arr))
-		((arrayp elt) (setf arr (chain arr (concat (flatten elt)))))))
-	arr))
-
-(defun make-keyed-instance (clazz props children)
+(defun add-key (props)
   (let ((props (or props (create))))
 	(setf (@ props key) (next-key))
-	(apply make-instance (flatten clazz props children))))
+	props))
+
+(defmacro make-keyed-instance (clazz props &rest children)
+  `(make-instance ,clazz (add-key ,props) ,@children))
+
+
 
 (defvar *posts* ([]))
 
@@ -144,21 +147,21 @@
    (dom 
 	(:div 
 	 (:div (table-of-contents))
-	 (:div `,(chain this state posts (map (lambda (post i)
-											(make-instance (@ *react-router *link)
-														   (create to post
-																   params (create id i)))))))))))
+	 (:div (chain this state posts (map (lambda (post i)
+										  (make-keyed-instance (@ *react-router *link)
+															   (create to (+ "/posts/" i))
+															   (@ post props title))))))))))
 
-(defclass *post (id)
+(defclass *post (params)
   (defun render ()
-	(get-post id)))
+	(get-post (chain params id))))
 
 (defmacro defpost (class title &rest body)
   `(progn
-	 (defclass ,class ()
+	 (defclass ,class (title)
 	   (defun render ()
 		 (dom (:div (:h3 ,title) ,@body))))
-	 (let ((post (make-instance ,class)))
+	 (let ((post (,(make-make-class-name class) (create title ,title))))
 	   (push-post post))))
 
 (defpost first "Enjoying Parenscript"
@@ -322,5 +325,5 @@ filled with thorough and well-written explanations of Common Lisp.")
 	  (make-keyed-instance
 	   *route
 	   (create component *post
-			   :path "posts/id"))))
+			   :path "posts/:id"))))
 	(chain document (get-element-by-id "container")))))
