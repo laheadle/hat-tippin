@@ -48,43 +48,43 @@
 								((:ok (rec))))))))))
 			   (rec))))
 		 (vote ()
-				 (chain process stdout (write "vote"))
-				 (let ((cursor (chain db (find-electors election)))
-					   (num-electors 0))
-				   (flet
-					   ((loop0 ()
-						  (seq
-						   (chain db (nextObject cursor))
-						   ((:ok (elector)
-								 (if (or (not elector)
-										 (and max-electors
-											  (>= (++ num-electors) max-electors)))
-									 undefined
-									 (progn
-									   (chain process stdout (write "v"))
-									   (seq
-										(do-vote db election elector)
-										((:ok (resources) 
-											  (progn
-												(chain process stdout
-													   (write (+ (@ elector domain)
-																 "#r=" resources ".")))
-												'(:voted)))
-										 (:err (err) (array :failed (@ err stack))))
-										((:ok (status)
-											  (seq
-											   (chain db
-													  (update-elector-status elector
-																			 (aref status 0)
-																			 (aref status 1)))
-											   ((:ok (loop0))))))))))))))
-					 (let ((threads ([])))
-					   (dotimes (i num-voting-threads)
-						 (chain threads (push (loop0))))
-					   (chain Q (all threads))))))
+		   (chain process stdout (write "vote"))
+		   (let ((cursor (chain db (find-electors election)))
+				 (num-electors 0))
+			 (flet
+				 ((loop0 ()
+					(seq
+					 (chain db (nextObject cursor))
+					 ((:ok (elector)
+						   (if (or (not elector)
+								   (and max-electors
+										(>= (++ num-electors) max-electors)))
+							   undefined
+							   (progn
+								 (chain process stdout (write "v"))
+								 (seq
+								  (do-vote db election elector)
+								  ((:ok (resources) 
+										(progn
+										  (chain process stdout
+												 (write (+ (@ elector domain)
+														   "#r=" resources ".")))
+										  '(:voted)))
+								   (:err (err) (array :failed (@ err stack))))
+								  ((:ok (status)
+										(seq
+										 (chain db
+												(update-elector-status elector
+																	   (aref status 0)
+																	   (aref status 1)))
+										 ((:ok (loop0))))))))))))))
+			   (let ((threads ([])))
+				 (dotimes (i num-voting-threads)
+				   (chain threads (push (loop0))))
+				 (chain Q (all threads))))))
 		 (tally ()
 		   (flet ((calc-rank (power) 
-					(if (< power 5) 1 (and (< power 20) 2 3)))
+					(if (< power 5) 1 (if (< power 20) 2 3)))
 				  (each-vote (cursor)
 					(let ((vote nil))
 					  (flet ((do-p-rank ()

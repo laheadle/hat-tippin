@@ -91,12 +91,6 @@
 
 (defun array-copy (a) (chain a (splice)))
 
-#+nil
-(defun make-instance (clazz props &rest children)
-  (let ((args (array-copy children)))
-	(chain args (unshift props))
-	(apply (chain *react (create-factory clazz)) args)))
-
 (defmacro make-instance (clazz props &rest children)
   `(funcall (chain *react (create-factory ,clazz)) ,props ,@children))
 
@@ -130,7 +124,9 @@
 
 (defclass *blog (children)
   (defun render ()
-	(dom children)))
+	(dom (:div
+		  (make-keyed-instance (@ *react-router *link) (create to "/") (dom ((:h1 :key (next-key)) "Hat Tippin'")))
+		  children))))
 
 (defclass *blog-index ()
 
@@ -160,11 +156,11 @@
   `(progn
 	 (defclass ,class (title)
 	   (defun render ()
-		 (dom (:div (:h3 ,title) ,@body))))
+		 (dom (:div (:h1 ,title) ,@body))))
 	 (let ((post (,(make-make-class-name class) (create title ,title))))
 	   (push-post post))))
 
-(defpost first "Enjoying Parenscript"
+(defpost first "Enjoying Parenscript (Mostly) (2015-10-xxx)"
 	(:p "I haven't hacked Common Lisp since I got paid to do so in the
   nineties. But ever since those days I've loved the language,
   especially the syntax and all it brings. Recently I've been coding a
@@ -172,9 +168,12 @@
   would be like if I could change the language. I looked
   into " ((:a :href "") "sweet.js") " but it didn't take because I got
   the feeling it was weaker and more complex than what I was looking
-  for. Well it turns out my preferred solution was hiding in plain
-  sight all along. I think I heard about parenscript years ago, but it
-  didn't click until last week. Since then I've been on a
+  for. I also looked
+  at " ((:a :href "https://github.com/Gozala/wisp") "Wisp") ", which
+  looks like a nice js lisp, shares a lot of syntax with clojure, and
+  isn't clojure. Well it turns out the apple of my eye was hiding in
+  plain sight all along. I think I heard about parenscript years ago,
+  but it didn't click until last week. Since then I've been on a
   binge (meaning a few hours here and there between work and
   family).")
   (:h3 "Looking Around")
@@ -272,7 +271,7 @@ function eachElector(cursor) {
   (:p "I thought about what I'd rather see here, and could easily implement, and came up with:")
   (:pre "
  (defun each-elector (cursor)
-   (seq (chain db next-object)
+   (seq (chain db (next-object cursor))
 	 ((:ok (elector)
 	    (if elector
 		  (seq (each-vote (chain db (find-votes election (@ elector domain))))
@@ -293,12 +292,46 @@ function eachElector(cursor) {
 ((:a :href "http://malisper.me/") "Macrology") ", which is
 filled with thorough and well-written explanations of Common Lisp.")
 
-  (:p ) ; why I chose parenscript over wisp and a few other jsy lisps
-
   ;; paredit, lisp for the web
   (:h3 "OMG Paredit")
-  (:h3 "Common Lisp")
-  (:h3 "Future plans") ; https://github.com/johnmastro/trident-mode.el/blob/master/trident-mode.el
+
+("I heard about this one years ago, but am only now getting into it. I think it's ")
+  (:h3 "Writing the Engine for this Blog Post")
+  (:p "I don't have a blog, but I wanted to share. I figured \"How
+  hard could it be to throw together a crappy little blog engine using
+  react?\" This turned out to be a real pain! I wanted a basic setup
+  with a list of posts and a home page link, a template that would
+  render around every page, and a few routes. It seems like everybody
+  is
+  using " ((:a :href "https://github.com/rackt/react-router") "React
+  Router") ", so I did too. Ouch. Painful, and in several ways. React
+  itself is no picnic. It has these conventions you have to follow
+  like generating a special unique key for every \"dynamically
+  created\" child component, which in my case was every child
+  component (working on a macro to automate this). React says \"hey,
+  no problem, don't use JSX if you don't want to,\" and then every
+  single example uses JSX, so you have to figure out the mapping
+  yourself. And then react-router presupposes es6 and something like
+  browserify in all of its docs, so more translations, not to mention
+  the code I downloaded was out of sync with the documentation. And
+  when something doesn't work, you end up having to look inside these
+  frameworks themselves, which are actually quite opaque. Anyway,
+  enough complaining, but suffice it to say I spent a lot of time
+  debugging this. Here it is, it mostly works.")
+
+  (:h3 "Future plans")
+
+(:p "First I need to lock down my environment. Sigil is great for
+starting, but I think I need something more emacs-based, so I can just
+look at expansions of lisp into javascript at the touch of a
+key. Heck, I can barely use SLIME! So that is next, along with better
+quicklisp and asdf understanding. But I am eager to try "
+((:a :href "https://github.com/johnmastro/trident-mode.el/blob/master/trident-mode.el") "Trident
+  Mode")
+", which they say makes emacs fall in love with parenscript. I also
+want to try
+Abo-Abo's " ((:a :href "https://github.com/abo-abo/lispy") "Lispy")
+" which is like a souped-up vi for paredit in emacs or something. As for projects, I'm wondering how well we could do a parenscript implementation of " ((:a :href "https://github.com/clojure/core.async") "Clojure's core.async") ".")
   )
 
 ;; (elts (*router
