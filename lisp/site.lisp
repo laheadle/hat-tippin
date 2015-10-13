@@ -36,7 +36,7 @@
 (defun* gen-defclass-props (props methods)
   (let ((method-names (append (mapcar #'second methods) *react-method-names*)))
     (loop for (ignore name args . body) in methods
-       collect name collect (gen-method args body props method-names))))
+		  collect name collect (gen-method args body props method-names))))
 
 (defun* make-make-class-name (name)
   (flet ((chop (s) (string-left-trim "*" s)))
@@ -125,7 +125,9 @@
 (defclass *blog (children)
   (defun render ()
 	(dom (:div
-		  (make-keyed-instance (@ *react-router *link) (create to "/") (dom ((:h1 :key (next-key)) "Hat Tippin'")))
+		  (make-keyed-instance (@ *react-router *link) (create to "/")
+							   (dom ((:h1 :key (next-key)) "Hat Tippin'")))
+		  (:h4 "by Lyn Headley")
 		  children))))
 
 (defclass *blog-index ()
@@ -139,14 +141,14 @@
   ;; Dan Midwood http://danmidwood.com/content/2014/11/21/animated-paredit.html
   ;; http://pub.gajendra.net/src/paredit-refcard.pdf
 
- (defun render ()
-   (dom 
-	(:div 
-	 (:div (table-of-contents))
-	 (:div (chain this state posts (map (lambda (post i)
-										  (make-keyed-instance (@ *react-router *link)
-															   (create to (+ "/posts/" i))
-															   (@ post props title))))))))))
+  (defun render ()
+	(dom 
+	 (:div 
+	  (:div (table-of-contents))
+	  (:div (chain this state posts (map (lambda (post i)
+										   (make-keyed-instance (@ *react-router *link)
+																(create to (+ "/posts/" i))
+																(@ post props title))))))))))
 
 (defclass *post (params)
   (defun render ()
@@ -160,8 +162,9 @@
 	 (let ((post (,(make-make-class-name class) (create title ,title))))
 	   (push-post post))))
 
-(defpost first "Enjoying Parenscript (Mostly) (2015-10-xxx)"
-	(:p "I haven't hacked Common Lisp since I got paid to do so in the
+(defpost first "Enjoying Parenscript (Mostly)"
+  (:p  (:i "October 2015"))
+  (:p "I haven't hacked Common Lisp since I got paid to do so in the
   nineties. But ever since those days I've loved the language,
   especially the syntax and all it brings. Recently I've been coding a
   lot of javascript, which is fine, but I've often wondered what it
@@ -193,7 +196,7 @@ close-up view of the rewards that parenscript brings.")
 
   (:h3 "Pulling the Trigger")
   (:p ((:a :href "https://groups.google.com/forum/#!forum/parenscript") "The parenscript mailing list ")
-"is bit hidden, requiring moderator approval to view
+	  "is bit hidden, requiring moderator approval to view
 archives. Curious, I overcame my laziness and requested access. At
 first, it looked like any other low-traffic list. But then I saw
 something that blew me away. It was a posting by Olaf Ruppert titled
@@ -289,13 +292,31 @@ function eachElector(cursor) {
   exactly the area we're using it for -- macros. But it means that
   getting comfortable with parenscript involves getting comfortable
   with CL, and this will not happen overnight. Around this time I discovered Malisper's excellent blog "
-((:a :href "http://malisper.me/") "Macrology") ", which is
+	  ((:a :href "http://malisper.me/") "Macrology") ", which is
 filled with thorough and well-written explanations of Common Lisp.")
 
   ;; paredit, lisp for the web
   (:h3 "OMG Paredit")
 
-("I heard about this one years ago, but am only now getting into it. I think it's ")
+  (:p "I heard about this one years ago, but am only now getting into
+  it. Paredit, which allows you to edit syntax trees rather than
+  characters and lines, has been a revelation. This is a truly great
+  answer for the \"why Lisp?\" question: because your editor is
+  operating on full syntax trees, your mind sees code and structure in
+  a direct way, not through the muddy lens of characters and
+  lines. Funny thing is that I didn't find the learning curve to be
+  all that steep, now that the ground has been cleared by Dan
+  Midwood's "
+	  ((:a :href "http://danmidwood.com/content/2014/11/21/animated-paredit.html")
+	   "Animated Guide to Paredit") " and Dan Cross's "
+	  ((:a :href "http://pub.gajendra.net/src/paredit-refcard.pdf") "Paredit Reference Card")
+	  " (and don't miss " ((:a :href "http://emacsrocks.com/e14.html") "Emacs Rocks! episode 14")
+	  " for inspiration and concrete use cases"
+	  ")." "In addition to nimbleness, Paredit has given me a new
+	  sense of security, and helped me to fearlessly hack away at large
+	  s-expressions, with the knowledge that I will only destroy
+	  things in targeted ways.")
+
   (:h3 "Writing the Engine for this Blog Post")
   (:p "I don't have a blog, but I wanted to share. I figured \"How
   hard could it be to throw together a crappy little blog engine using
@@ -317,21 +338,21 @@ filled with thorough and well-written explanations of Common Lisp.")
   when something doesn't work, you end up having to look inside these
   frameworks themselves, which are actually quite opaque. Anyway,
   enough complaining, but suffice it to say I spent a lot of time
-  debugging this. Here it is, it mostly works.")
+  debugging this (like three hours). Here it is, it mostly works.")
 
   (:h3 "Future plans")
 
-(:p "First I need to lock down my environment. Sigil is great for
+  (:p "First I need to lock down my environment. Sigil is great for
 starting, but I think I need something more emacs-based, so I can just
 look at expansions of lisp into javascript at the touch of a
 key. Heck, I can barely use SLIME! So that is next, along with better
 quicklisp and asdf understanding. But I am eager to try "
-((:a :href "https://github.com/johnmastro/trident-mode.el/blob/master/trident-mode.el") "Trident
+	  ((:a :href "https://github.com/johnmastro/trident-mode.el/blob/master/trident-mode.el") "Trident
   Mode")
-", which they say makes emacs fall in love with parenscript. I also
+	  ", which they say makes emacs fall in love with parenscript. I also
 want to try
 Abo-Abo's " ((:a :href "https://github.com/abo-abo/lispy") "Lispy")
-" which is like a souped-up vi for paredit in emacs or something. As for projects, I'm wondering how well we could do a parenscript implementation of " ((:a :href "https://github.com/clojure/core.async") "Clojure's core.async") ".")
+	  " which is like a souped-up vi for paredit in emacs or something. As for projects, I'm wondering how well we could do a parenscript implementation of " ((:a :href "https://github.com/clojure/core.async") "Clojure's core.async") ".")
   )
 
 ;; (elts (*router
@@ -340,6 +361,12 @@ Abo-Abo's " ((:a :href "https://github.com/abo-abo/lispy") "Lispy")
 ;; 		((*index-route :component *blog-index))
 ;; 		((*route :path "article/:id" :component *article)))))
 
+;; Here is what we should be writing, but can't yet.
+#+nil
+(chain *react-d-o-m (render (dom (:*router ((:*route :path "/" :component *blog)
+											((:*index-route :component *blog-index))
+											((:*route :component *post :path "/posts/:id")))))
+							(chain document (get-element-by-id "container"))))
 
 (with-slots (*router *route *index-route) *react-router
   (chain

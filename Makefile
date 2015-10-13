@@ -9,7 +9,7 @@ reactTest:
 	$(sigil) react.lisp > react.js
 	cp *.html *.js $(HOME)/Downloads/reactPlay
 
-blog:
-	$(sigil) lisp/blog.lisp > build/js/blog.js
-	cp static/blog.html build/js/blog.js $(HOME)/Downloads/blog
-	cp static/js/* $(HOME)/Downloads/blog/js
+site:
+	$(sigil) lisp/site.lisp > build/js/site.js
+	cp static/index.html build/js/site.js $(HOME)/Downloads/site
+	cp static/js/* $(HOME)/Downloads/site/js
