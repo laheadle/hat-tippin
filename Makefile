@@ -1,5 +1,6 @@
 
 sigil=./node_modules/sigil-cli/sigil
+site=../hat-tippin-site
 
 threadTest:
 	$(sigil) lisp/threads.lisp lisp/election.lisp > build/js/election.js
@@ -11,5 +12,5 @@ reactTest:
 
 site:
 	$(sigil) lisp/site.lisp > build/js/site.js
-	cp static/index.html build/js/site.js $(HOME)/Downloads/site
-	cp static/js/* $(HOME)/Downloads/site/js
+	cp static/index.html $(site)
+	cp build/js/* static/js/* $(site)/js
