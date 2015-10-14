@@ -169,7 +169,7 @@
   especially the syntax and all it brings. Recently I've been coding a
   lot of javascript, which is fine, but I've often wondered what it
   would be like if I could change the language. I looked
-  into " ((:a :href "") "sweet.js") " but it didn't take because I got
+  into " ((:a :href "http://sweetjs.org") "sweet.js") " but it didn't take because I got
   the feeling it was weaker and more complex than what I was looking
   for. I also looked
   at " ((:a :href "https://github.com/Gozala/wisp") "Wisp") ", which

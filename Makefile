@@ -14,3 +14,4 @@ site:
 	$(sigil) lisp/site.lisp > build/js/site.js
 	cp static/index.html $(site)
 	cp build/js/* static/js/* $(site)/js
+	cp static/css/* $(site)/css
